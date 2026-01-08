@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StockWidget } from './components/StockWidget';
 import { Watchlist } from './components/Watchlist';
+import { ComparisonWidget } from './components/ComparisonWidget';
 
 // MUI Components
 import { 
@@ -30,7 +31,7 @@ function App() {
       {/* Main Content */}
       <Grid container spacing={3}>
         {/* Main Stock Widget */}
-        <Grid item xs={12} md={8} lg={9}>
+        <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 8', lg: 'span 9' } }}>
           <StockWidget 
             key={symbol} // Force re-render when symbol changes
             symbol={symbol} 
@@ -39,8 +40,13 @@ function App() {
         </Grid>
 
         {/* Watchlist */}
-        <Grid item xs={12} md={4} lg={3}>
+        <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4', lg: 'span 3' } }}>
           <Watchlist onSelectSymbol={setSymbol} />
+        </Grid>
+
+        {/* Comparison Widget */}
+        <Grid sx={{ gridColumn: 'span 12' }}>
+          <ComparisonWidget />
         </Grid>
 
       </Grid>
