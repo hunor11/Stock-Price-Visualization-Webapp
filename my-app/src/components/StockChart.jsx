@@ -16,7 +16,8 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
     const handleResize = () => {
       if (chartInstance.current && chartContainerRef.current) {
         chartInstance.current.applyOptions({ 
-          width: chartContainerRef.current.clientWidth 
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight
         });
       }
     };
@@ -27,7 +28,7 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
         textColor: 'black',
       },
       width: chartContainerRef.current.clientWidth,
-      height: 400, // Fixed height as requested
+      height: chartContainerRef.current.clientHeight,
       grid: {
         vertLines: { color: '#e0e0e0' },
         horzLines: { color: '#e0e0e0' },
@@ -149,7 +150,7 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
     <Box 
       sx={{ 
         width: '100%', 
-        height: '400px',
+        height: '100%',
         position: 'relative',
         bgcolor: 'background.paper',
         borderRadius: 1, 

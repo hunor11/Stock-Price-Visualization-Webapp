@@ -21,7 +21,7 @@ export const Watchlist = ({ onSelectSymbol }) => {
   const { watchlist, removeSymbol } = useWatchlist();
 
   return (
-    <Paper elevation={3} sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+    <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
       <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
         Favorites
       </Typography>

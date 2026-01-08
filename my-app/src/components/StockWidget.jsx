@@ -215,7 +215,7 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
       </Box>
 
       {/* ZONE C: CHART AREA */}
-      <Box sx={{ position: 'relative', minHeight: '400px', bgcolor: 'white' }}>
+      <Box sx={{ position: 'relative', height: '400px', bgcolor: 'white' }}>
         
         {/* Loading Overlay */}
         {loading && (

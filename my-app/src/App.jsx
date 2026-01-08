@@ -8,7 +8,11 @@ import {
   Container, 
   Typography, 
   Box,
-  Grid
+  Tabs,
+  Tab,
+  AppBar,
+  Toolbar,
+  Paper
 } from '@mui/material';
 
 // MUI Icons
@@ -16,42 +20,60 @@ import ShowChartIcon from '@mui/icons-material/ShowChart';
 
 function App() {
   const [symbol, setSymbol] = useState('AAPL');
+  const [tabIndex, setTabIndex] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      
-      {/* Header Section */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <ShowChartIcon fontSize="large" color="primary" />
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Stock Viewer
-        </Typography>
-      </Box>
+    <Box>
+      <AppBar position="static" color="default" elevation={1}>
+        <Toolbar sx={{ flexDirection: 'column', alignItems: 'stretch', p: 2 }}>
+          {/* Header Section */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <ShowChartIcon fontSize="large" color="primary" />
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              Stock Viewer
+            </Typography>
+          </Box>
 
-      {/* Main Content */}
-      <Grid container spacing={3}>
-        {/* Main Stock Widget */}
-        <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 8', lg: 'span 9' } }}>
-          <StockWidget 
-            key={symbol} // Force re-render when symbol changes
-            symbol={symbol} 
-            onSymbolChange={setSymbol} 
-          />
-        </Grid>
-
-        {/* Watchlist */}
-        <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4', lg: 'span 3' } }}>
+          {/* Watchlist */}
           <Watchlist onSelectSymbol={setSymbol} />
-        </Grid>
-
-        {/* Comparison Widget */}
-        <Grid sx={{ gridColumn: 'span 12' }}>
-          <ComparisonWidget />
-        </Grid>
-
-      </Grid>
+        </Toolbar>
+      </AppBar>
       
-    </Container>
+      <Container maxWidth={false} sx={{ mt: 4, mb: 4 }}>
+        {/* Tabs for Stock and Comparison */}
+        <Box sx={{ width: '100%' }}>
+          <AppBar position="static" color="default" sx={{ borderRadius: 1 }}>
+            <Tabs 
+              value={tabIndex} 
+              onChange={handleTabChange} 
+              indicatorColor="primary"
+              textColor="primary"
+              variant="fullWidth"
+            >
+              <Tab label="Single Stock View" sx={{ fontWeight: 'bold' }} />
+              <Tab label="Comparison View" sx={{ fontWeight: 'bold' }} />
+            </Tabs>
+          </AppBar>
+          
+          <Paper elevation={3} sx={{ mt: 3, p: 3 }}>
+            {tabIndex === 0 && (
+              <StockWidget
+                key={symbol} // Force re-render when symbol changes
+                symbol={symbol}
+                onSymbolChange={setSymbol}
+              />
+            )}
+            {tabIndex === 1 && (
+              <ComparisonWidget />
+            )}
+          </Paper>
+        </Box>
+      </Container>
+    </Box>
   );
 }
 

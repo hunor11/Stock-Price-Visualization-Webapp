@@ -3,8 +3,8 @@ import { useStockHistory } from '../hooks/useStockHistory';
 import { StockChart } from './StockChart';
 import { Box, Typography, Paper, CircularProgress, Alert } from '@mui/material';
 
-export function SingleStockComparisonView({ symbol }) {
-    const { data, loading, error } = useStockHistory(symbol);
+export function SingleStockComparisonView({ symbol, interval, outputsize }) {
+    const { data, loading, error } = useStockHistory(symbol, interval, outputsize);
 
     return (
         <Paper elevation={2} sx={{ p: 2, borderRadius: 2 }}>
