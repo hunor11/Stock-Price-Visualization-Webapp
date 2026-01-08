@@ -16,12 +16,18 @@ const BASE_URL = 'https://api.twelvedata.com/time_series';
 
 export const useStockHistory = (symbol, interval = '1day', outputsize = 500) => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     // Prevent fetching if no symbol is provided
-    if (!symbol) return;
+    if (!symbol) {
+      setLoading(false);
+      setData([]);
+      return;
+    }
+
+    let isActive = true;
 
     const fetchPrices = async () => {
       setLoading(true);
@@ -38,7 +44,11 @@ export const useStockHistory = (symbol, interval = '1day', outputsize = 500) => 
 
         // STEP 2: Fetch Data
         const response = await fetch(url);
+        if (!isActive) return;
+
         const result = await response.json();
+        if (!isActive) return;
+
 
         // STEP 3: Handle Twelve Data specific errors
         if (result.status === 'error') {
@@ -49,7 +59,8 @@ export const useStockHistory = (symbol, interval = '1day', outputsize = 500) => 
         // The API returns an object with a 'values' array.
         // We need to map this to the format required by Lightweight Charts.
         // Format: { time: 'YYYY-MM-DD', open: number, high: number, low: number, close: number }
-        const formattedData = result.values.map((item) => ({
+        const values = result.values || [];
+        const formattedData = values.map((item) => ({
           time: item.datetime, // Twelve Data uses 'datetime', Charts need 'time'
           open: parseFloat(item.open),   // API returns strings, we need numbers
           high: parseFloat(item.high),
@@ -64,17 +75,27 @@ export const useStockHistory = (symbol, interval = '1day', outputsize = 500) => 
         // We use .reverse() because the array is already sorted by date, just backwards.
         const sortedData = formattedData.reverse();
 
-        setData(sortedData);
+        if (isActive) {
+          setData(sortedData);
+        }
 
       } catch (err) {
-        console.error('Stock Fetch Error:', err);
-        setError(err.message);
+        if (isActive) {
+          console.error('Stock Fetch Error:', err);
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchPrices();
+
+    return () => {
+      isActive = false;
+    }
   }, [symbol, interval, outputsize]); // The effect re-runs whenever these dependencies change
 
   return { data, loading, error };

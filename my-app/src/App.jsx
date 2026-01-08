@@ -1,19 +1,23 @@
+import { useState } from 'react';
 import { StockWidget } from './components/StockWidget';
+import { Watchlist } from './components/Watchlist';
 
 // MUI Components
 import { 
   Container, 
   Typography, 
-  Box
+  Box,
+  Grid
 } from '@mui/material';
 
 // MUI Icons
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 
 function App() {
+  const [symbol, setSymbol] = useState('AAPL');
+
   return (
-    // Container limits width and centers content automatically
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       
       {/* Header Section */}
       <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -23,8 +27,23 @@ function App() {
         </Typography>
       </Box>
 
-      {/* Reusable Stock Widget */}
-      <StockWidget defaultSymbol="AAPL" />
+      {/* Main Content */}
+      <Grid container spacing={3}>
+        {/* Main Stock Widget */}
+        <Grid item xs={12} md={8} lg={9}>
+          <StockWidget 
+            key={symbol} // Force re-render when symbol changes
+            symbol={symbol} 
+            onSymbolChange={setSymbol} 
+          />
+        </Grid>
+
+        {/* Watchlist */}
+        <Grid item xs={12} md={4} lg={3}>
+          <Watchlist onSelectSymbol={setSymbol} />
+        </Grid>
+
+      </Grid>
       
     </Container>
   );

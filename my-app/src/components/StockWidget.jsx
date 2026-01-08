@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useStockHistory } from '../hooks/useStockHistory';
+import { useWatchlist } from '../hooks/useWatchlist';
 import { StockChart } from './StockChart';
 import { calculateSMA, calculateRSI } from '../utils/indicators';
 
@@ -18,18 +19,19 @@ import {
   Chip,
   Stack,
   Button, 
-  Divider,
+  Tooltip,
 } from '@mui/material';
 
 // MUI Icons
 import SearchIcon from '@mui/icons-material/Search';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
-import UpdateIcon from '@mui/icons-material/Update';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import StarIcon from '@mui/icons-material/Star';
 
-export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
+
+export const StockWidget = ({ symbol, onSymbolChange }) => {
   // --- STATE ---
-  const [inputVal, setInputVal] = useState(defaultSymbol);
-  const [symbol, setSymbol] = useState(defaultSymbol);
+  const [inputVal, setInputVal] = useState(symbol);
   
   // Interval: 1day, 1week, 1month
   const [interval, setInterval] = useState('1day');
@@ -43,6 +45,17 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
 
   // --- API HOOK ---
   const { data, loading, error } = useStockHistory(symbol, interval, range);
+  
+  // --- WATCHLIST HOOK ---
+  const { watchlist, addSymbol, removeSymbol } = useWatchlist();
+  const isFavorited = watchlist.includes(symbol);
+
+  // --- EFFECTS ---
+  // When the symbol prop changes (e.g. from watchlist), update the input field
+  useEffect(() => {
+    setInputVal(symbol);
+  }, [symbol]);
+
 
   // --- DERIVED DATA (Calculations) ---
   
@@ -52,7 +65,6 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
     const latest = data[data.length - 1]; // Last item is newest
     const previous = data.length > 1 ? data[data.length - 2] : null;
     
-    // Calculate change based on previous close if available, else open
     const prevClose = previous ? previous.close : latest.open;
     const change = latest.close - prevClose;
     const percentChange = (change / prevClose) * 100;
@@ -83,7 +95,7 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
 
   const handleSearch = () => {
     if (inputVal.trim()) {
-      setSymbol(inputVal.toUpperCase());
+      onSymbolChange(inputVal.toUpperCase());
     }
   };
 
@@ -101,6 +113,14 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
     setIndicator((prev) => (prev === ind ? null : ind));
   };
 
+  const handleFavoriteToggle = () => {
+      if (isFavorited) {
+          removeSymbol(symbol);
+      } else {
+          addSymbol(symbol);
+      }
+  }
+
 
   // --- RENDER ---
 
@@ -111,7 +131,7 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
       <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         
         {/* Search Box */}
-        <Box sx={{ flex: 1, minWidth: '200px' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
           <TextField 
             variant="outlined" 
             size="small"
@@ -129,6 +149,11 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
               sx: { borderRadius: 2, fontSize: '1.1rem', fontWeight: 500 }
             }}
           />
+          <Tooltip title={isFavorited ? "Remove from favorites" : "Add to favorites"}>
+            <IconButton onClick={handleFavoriteToggle} sx={{ ml: 1 }}>
+                {isFavorited ? <StarIcon color="warning" /> : <StarBorderIcon />}
+            </IconButton>
+          </Tooltip>
         </Box>
 
         {/* Price Display */}
@@ -217,25 +242,28 @@ export const StockWidget = ({ defaultSymbol = 'AAPL' }) => {
           </Box>
         )}
         
-        {/* Empty State */}
-        {!loading && !error && data.length === 0 && (
-             <Box sx={{ 
-                position: 'absolute', inset: 0, zIndex: 5, 
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-                opacity: 0.5 
-              }}>
-                <ShowChartIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
-                <Typography variant="h6" color="text.secondary">No stock data available</Typography>
-              </Box>
+        {/* Chart or Empty State */}
+        {!loading && !error && (
+          <>
+            {data && data.length > 0 ? (
+              <StockChart 
+                data={data} 
+                indicatorData={indicatorData}
+                indicatorType={indicator}
+                indicatorColor={indicator === 'RSI' ? '#b4009e' : '#2962ff'}
+              />
+            ) : (
+              <Box sx={{ 
+                  position: 'absolute', inset: 0, zIndex: 5, 
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+                  opacity: 0.5 
+                }}>
+                  <ShowChartIcon sx={{ fontSize: 80, color: 'text.disabled' }} />
+                  <Typography variant="h6" color="text.secondary">No stock data available</Typography>
+                </Box>
+            )}
+          </>
         )}
-
-        {/* The Chart */}
-        <StockChart 
-            data={data} 
-            indicatorData={indicatorData}
-            indicatorType={indicator}
-            indicatorColor={indicator === 'RSI' ? '#b4009e' : '#2962ff'}
-        />
 
       </Box>
 
