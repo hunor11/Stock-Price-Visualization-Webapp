@@ -141,7 +141,8 @@ function App() {
             border: '1px solid #e0e0e0', 
             borderRadius: 3, 
             bgcolor: 'white',
-            minHeight: '600px' // Keeps layout stable
+            minHeight: '600px', // Keeps layout stable
+            width: '100%'
           }}
         >
           {viewMode === 'single' ? (
