@@ -2,15 +2,14 @@ import { useState, useMemo, useEffect } from 'react';
 import { useStockHistory } from '../hooks/useStockHistory';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { StockChart } from './StockChart';
-import { calculateSMA, calculateRSI } from '../utils/indicators';
+import { calculateSMA, calculateRSI, calculateEMA, calculateMACD, calculateBollingerBands } from '../utils/indicators';
 
 // MUI Components
-import { 
-  Typography, 
-  Box, 
-  Paper, 
-  CircularProgress, 
-  Alert, 
+import {
+  Typography,
+  Box,
+  Paper,
+  CircularProgress,  Alert, 
   TextField,
   InputAdornment,
   IconButton,
@@ -80,12 +79,21 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
   // 2. Indicator Data
   const indicatorData = useMemo(() => {
     if (!data || data.length === 0 || !indicator) return [];
-    
+
     if (indicator === 'SMA') {
       return calculateSMA(data, 20); // 20-period SMA
-    } 
+    }
+    if (indicator === 'EMA') {
+      return calculateEMA(data, 20); // 20-period EMA
+    }
     if (indicator === 'RSI') {
       return calculateRSI(data, 14); // 14-period RSI
+    }
+    if (indicator === 'MACD') {
+        return calculateMACD(data);
+    }
+    if (indicator === 'BollingerBands') {
+        return calculateBollingerBands(data);
     }
     return [];
   }, [data, indicator]);
@@ -196,20 +204,41 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
         {/* Indicators */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
              <Typography variant="overline" color="text.secondary" fontWeight="bold">INDICATORS</Typography>
-             <Chip 
-                label="SMA (20)" 
-                clickable 
-                color={indicator === 'SMA' ? "primary" : "default"} 
+             <Chip
+                label="SMA (20)"
+                clickable
+                color={indicator === 'SMA' ? "primary" : "default"}
                 variant={indicator === 'SMA' ? "filled" : "outlined"}
                 onClick={() => handleIndicatorToggle('SMA')}
              />
-             <Chip 
-                label="RSI (14)" 
-                clickable 
+             <Chip
+                label="EMA (20)"
+                clickable
+                color={indicator === 'EMA' ? "primary" : "default"}
+                variant={indicator === 'EMA' ? "filled" : "outlined"}
+                onClick={() => handleIndicatorToggle('EMA')}
+             />
+             <Chip
+                label="RSI (14)"
+                clickable
                 color={indicator === 'RSI' ? "secondary" : "default"}
                 variant={indicator === 'RSI' ? "filled" : "outlined"}
                 onClick={() => handleIndicatorToggle('RSI')}
                 sx={indicator === 'RSI' ? { bgcolor: '#b4009e', color: 'white' } : {}}
+             />
+             <Chip
+                label="MACD"
+                clickable
+                color={indicator === 'MACD' ? "secondary" : "default"}
+                variant={indicator === 'MACD' ? "filled" : "outlined"}
+                onClick={() => handleIndicatorToggle('MACD')}
+             />
+             <Chip
+                label="Bollinger Bands"
+                clickable
+                color={indicator === 'BollingerBands' ? "secondary" : "default"}
+                variant={indicator === 'BollingerBands' ? "filled" : "outlined"}
+                onClick={() => handleIndicatorToggle('BollingerBands')}
              />
         </Box>
       </Box>
