@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, LineSeries, CandlestickSeries, HistogramSeries } from 'lightweight-charts';
-import { Box, Typography, Paper } from '@mui/material';
+import { createChart, ColorType, LineSeries, CandlestickSeries, HistogramSeries, AreaSeries } from 'lightweight-charts';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 
-export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor }) => {
+export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor, chartType = 'candlestick' }) => {
+  const theme = useTheme();
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
   const candlestickSeriesRef = useRef(null);
+  const areaSeriesRef = useRef(null); // Ref for Line/Area chart
   const indicatorSeriesRef = useRef(null);
   const bollingerBandsSeriesRef = useRef({ upper: null, middle: null, lower: null });
   const macdSeriesRef = useRef({ macd: null, signal: null, histogram: null });
@@ -26,51 +28,62 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: 'white' },
-        textColor: 'black',
+        background: { type: ColorType.Solid, color: theme.palette.background.paper },
+        textColor: theme.palette.text.primary,
       },
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
       grid: {
-        vertLines: { color: '#e0e0e0' },
-        horzLines: { color: '#e0e0e0' },
+        vertLines: { color: theme.palette.divider },
+        horzLines: { color: theme.palette.divider },
       },
       crosshair: {
         mode: 1, // CrosshairMode.Normal
       },
       timeScale: {
-        borderColor: '#cccccc',
+        borderColor: theme.palette.divider,
       },
     });
 
     chartInstance.current = chart;
 
-    // 2. Add Candlestick Series
+    // 2. Add Series
+    // Candlestick
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#26a69a',
-      downColor: '#ef5350',
+      upColor: '#22c55e', // Green 500
+      downColor: '#ef4444', // Red 500
       borderVisible: false,
-      wickUpColor: '#26a69a',
-      wickDownColor: '#ef5350',
+      wickUpColor: '#22c55e',
+      wickDownColor: '#ef4444',
+      visible: chartType === 'candlestick', 
     });
     candlestickSeriesRef.current = candleSeries;
 
+    // Area (Line)
+    const areaSeries = chart.addSeries(AreaSeries, {
+      lineColor: theme.palette.primary.main,
+      topColor: `${theme.palette.primary.main}4d`, // 30% Alpha approx
+      bottomColor: `${theme.palette.primary.main}00`, // 0% Alpha
+      visible: chartType === 'line',
+    });
+    areaSeriesRef.current = areaSeries;
+
     // 3. Add Indicator Series (Placeholder)
     indicatorSeriesRef.current = chart.addSeries(LineSeries, {
-      color: indicatorColor || '#2962ff',
+      color: indicatorColor || theme.palette.primary.main,
       lineWidth: 2,
     });
 
     // Bollinger Bands Series
-    bollingerBandsSeriesRef.current.upper = chart.addSeries(LineSeries, { color: '#4caf50', lineWidth: 1, visible: false });
-    bollingerBandsSeriesRef.current.middle = chart.addSeries(LineSeries, { color: '#ff9800', lineWidth: 1, visible: false });
-    bollingerBandsSeriesRef.current.lower = chart.addSeries(LineSeries, { color: '#f44336', lineWidth: 1, visible: false });
+    bollingerBandsSeriesRef.current.upper = chart.addSeries(LineSeries, { color: '#22c55e', lineWidth: 1, visible: false });
+    bollingerBandsSeriesRef.current.middle = chart.addSeries(LineSeries, { color: '#f59e0b', lineWidth: 1, visible: false }); // Amber 500
+    bollingerBandsSeriesRef.current.lower = chart.addSeries(LineSeries, { color: '#ef4444', lineWidth: 1, visible: false });
 
     // MACD Series
-    macdSeriesRef.current.macd = chart.addSeries(LineSeries, { color: '#2962ff', lineWidth: 2, visible: false });
-    macdSeriesRef.current.signal = chart.addSeries(LineSeries, { color: '#ff6d00', lineWidth: 2, visible: false });
+    macdSeriesRef.current.macd = chart.addSeries(LineSeries, { color: theme.palette.primary.main, lineWidth: 2, visible: false });
+    macdSeriesRef.current.signal = chart.addSeries(LineSeries, { color: '#f97316', lineWidth: 2, visible: false }); // Orange 500
     macdSeriesRef.current.histogram = chart.addSeries(HistogramSeries, {
-        color: '#26a69a',
+        color: '#22c55e',
         base: 0,
         visible: false,
     });
@@ -78,6 +91,11 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
     // 4. Initial Data Set
     if (data && data.length > 0) {
       candleSeries.setData(data);
+      
+      // For Area series, we need singular value (close price) not OHLC
+      const areaData = data.map(d => ({ time: d.time, value: d.close }));
+      areaSeries.setData(areaData);
+
       // Set initial legend to last data point
       const last = data[data.length - 1];
       setLegend({
@@ -103,7 +121,11 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
          return;
       }
 
+      // Try to get data from whichever series is active, or both.
+      // Note: param.seriesData is a Map.
       const candleData = param.seriesData.get(candlestickSeriesRef.current);
+      const areaData = param.seriesData.get(areaSeriesRef.current);
+      
       const indData = indicatorSeriesRef.current ? param.seriesData.get(indicatorSeriesRef.current) : null;
       const bbData = {
           upper: bollingerBandsSeriesRef.current.upper ? param.seriesData.get(bollingerBandsSeriesRef.current.upper) : null,
@@ -116,17 +138,35 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
         histogram: macdSeriesRef.current.histogram ? param.seriesData.get(macdSeriesRef.current.histogram) : null,
       };
 
+      // Construct legend data. 
+      // If candleData is present, we have OHLC.
+      // If only areaData is present, we basically only have "Close" (value).
+      // However, usually the 'data' source is the same full object, so even if we use area chart, we "typically" want to see the full OHLC info if available in the original source, but the crosshair might only return what that specific series holds.
+      // LightWeight Charts 'seriesData' returns the data item provided to setData.
+      // For AreaSeries we provided {time, value}. So we only get value (Close).
+      
+      let legendValues = {};
+      
       if (candleData) {
-        setLegend({
-          open: candleData.open,
-          high: candleData.high,
-          low: candleData.low,
-          close: candleData.close,
-          indicator: indData ? indData.value : null,
-          bollingerBands: bbData.upper ? bbData : null,
-          macd: macdData.macd ? macdData : null,
-        });
+          legendValues = {
+              open: candleData.open,
+              high: candleData.high,
+              low: candleData.low,
+              close: candleData.close,
+          };
+      } else if (areaData) {
+          // If we are in line mode, we only get 'value' which is the close price.
+          legendValues = {
+              close: areaData.value
+          };
       }
+
+      setLegend({
+          ...legendValues,
+        indicator: indData ? indData.value : null,
+        bollingerBands: bbData.upper ? bbData : null,
+        macd: macdData.macd ? macdData : null,
+      });
     });
 
     // 6. Resize Observer
@@ -141,11 +181,33 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
     };
   }, []);
 
+  // Effect: Handle Chart Type Switching
+  useEffect(() => {
+      if (candlestickSeriesRef.current && areaSeriesRef.current) {
+          if (chartType === 'candlestick') {
+            candlestickSeriesRef.current.applyOptions({ visible: true });
+            areaSeriesRef.current.applyOptions({ visible: false });
+          } else {
+            candlestickSeriesRef.current.applyOptions({ visible: false });
+            areaSeriesRef.current.applyOptions({ visible: true });
+          }
+      }
+  }, [chartType]);
+
   // Update Data Effects
   useEffect(() => {
-    if (candlestickSeriesRef.current && data) {
-      candlestickSeriesRef.current.setData(data);
-      chartInstance.current.timeScale().fitContent();
+    if (data) {
+      if (candlestickSeriesRef.current) {
+        candlestickSeriesRef.current.setData(data);
+      }
+      if (areaSeriesRef.current) {
+           const areaData = data.map(d => ({ time: d.time, value: d.close }));
+           areaSeriesRef.current.setData(areaData);
+      }
+
+      if (chartInstance.current) {
+           chartInstance.current.timeScale().fitContent();
+      }
 
       if(data.length > 0) {
          const last = data[data.length - 1];
@@ -154,7 +216,7 @@ export const StockChart = ({ data, indicatorData, indicatorType, indicatorColor 
     }
   }, [data]);
 
-  useEffect(() => {
+   useEffect(() => {
     const isBollingerBands = indicatorType === 'BollingerBands' && indicatorData && indicatorData.upper;
     const isMACD = indicatorType === 'MACD' && indicatorData && indicatorData.macdLine;
 

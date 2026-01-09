@@ -23,6 +23,16 @@ export const StockDataProvider = ({ children }) => {
 
         setLoadingSymbols(prev => new Set(prev).add(symbol));
 
+        if (interval === '1week') {
+            outputsize = Math.ceil(outputsize / 7);
+        } else if (interval === '1month') {
+            outputsize = Math.ceil(outputsize / 30);
+        } else if (interval === '1year') {
+            outputsize = Math.ceil(outputsize / 365);
+        } else {
+            outputsize = outputsize;
+        }
+
         try {
             const url = `${BASE_URL}?symbol=${symbol}&interval=${interval}&apikey=${API_KEY}&outputsize=${outputsize}`;
             const response = await fetch(url);

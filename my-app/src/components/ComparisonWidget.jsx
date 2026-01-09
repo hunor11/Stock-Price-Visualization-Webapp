@@ -33,7 +33,7 @@ export function ComparisonWidget() {
     };
 
     return (
-        <Paper sx={{ p: 2 }}>
+        <Box sx={{ p: 0 }}>
             <Typography variant="h6" gutterBottom>
                 Compare Stocks
             </Typography>
@@ -109,6 +109,6 @@ export function ComparisonWidget() {
                     />
                 ))}
             </Stack>
-        </Paper>
+        </Box>
     );
 }

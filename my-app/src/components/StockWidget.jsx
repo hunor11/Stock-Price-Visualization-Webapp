@@ -24,6 +24,7 @@ import {
 // MUI Icons
 import SearchIcon from '@mui/icons-material/Search';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import CandlestickChartIcon from '@mui/icons-material/CandlestickChart';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import StarIcon from '@mui/icons-material/Star';
 
@@ -38,6 +39,9 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
   // Output Size (Range): Number of data points to fetch
   // Mapping: 1M=30, 3M=90, 1Y=260, 5Y=1300, Max=5000
   const [range, setRange] = useState(260); 
+
+  // Chart Type: 'candlestick' or 'line'
+  const [chartType, setChartType] = useState('candlestick');
 
   // Indicator: 'SMA', 'RSI', or null
   const [indicator, setIndicator] = useState(null);
@@ -117,6 +121,12 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
     }
   };
 
+  const handleChartTypeChange = (event, newType) => {
+    if (newType !== null) {
+      setChartType(newType);
+    }
+  };
+
   const handleIndicatorToggle = (ind) => {
     setIndicator((prev) => (prev === ind ? null : ind));
   };
@@ -133,13 +143,13 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
   // --- RENDER ---
 
   return (
-    <Paper elevation={3} sx={{ p: 0, overflow: 'hidden', borderRadius: 2 }}>
+    <Box elevation={3} sx={{ p: 0, overflow: 'hidden', borderRadius: 2, bgcolor: 'background.paper' }}>
       
       {/* ZONE A: HEADER (Search & Price) */}
-      <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         
         {/* Search Box */}
-        <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '250px' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '300px' }}>
           <TextField 
             variant="outlined" 
             size="small"
@@ -184,21 +194,43 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
       </Box>
 
       {/* ZONE B: TOOLBAR (Intervals & Indicators) */}
-      <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'background.default', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         
-        {/* Interval Selection */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="overline" color="text.secondary" fontWeight="bold">INTERVAL</Typography>
-            <ToggleButtonGroup
-            value={interval}
-            exclusive
-            onChange={handleIntervalChange}
-            size="small"
-            >
-            <ToggleButton value="1day">1D</ToggleButton>
-            <ToggleButton value="1week">1W</ToggleButton>
-            <ToggleButton value="1month">1M</ToggleButton>
-            </ToggleButtonGroup>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            {/* Interval Selection */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="overline" color="text.secondary" fontWeight="bold">TIME</Typography>
+                <ToggleButtonGroup
+                value={interval}
+                exclusive
+                onChange={handleIntervalChange}
+                size="small"
+                sx={{ bgcolor: 'white' }}
+                >
+                <ToggleButton value="1day">1D</ToggleButton>
+                <ToggleButton value="1week">1W</ToggleButton>
+                <ToggleButton value="1month">1M</ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
+
+            {/* Chart Type Selection */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="overline" color="text.secondary" fontWeight="bold">STYLE</Typography>
+                <ToggleButtonGroup
+                    value={chartType}
+                    exclusive
+                    onChange={handleChartTypeChange}
+                    size="small"
+                    sx={{ bgcolor: 'white' }}
+                >
+                    <ToggleButton value="candlestick" title="Candlestick">
+                        <CandlestickChartIcon />
+                    </ToggleButton>
+                    <ToggleButton value="line" title="Line Chart">
+                        <ShowChartIcon />
+                    </ToggleButton>
+                </ToggleButtonGroup>
+            </Box>
         </Box>
 
         {/* Indicators */}
@@ -224,7 +256,6 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
                 color={indicator === 'RSI' ? "secondary" : "default"}
                 variant={indicator === 'RSI' ? "filled" : "outlined"}
                 onClick={() => handleIndicatorToggle('RSI')}
-                sx={indicator === 'RSI' ? { bgcolor: '#b4009e', color: 'white' } : {}}
              />
              <Chip
                 label="MACD"
@@ -244,7 +275,7 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
       </Box>
 
       {/* ZONE C: CHART AREA */}
-      <Box sx={{ position: 'relative', height: '400px', bgcolor: 'white' }}>
+      <Box sx={{ position: 'relative', height: '400px', bgcolor: 'background.paper' }}>
         
         {/* Loading Overlay */}
         {loading && (
@@ -279,7 +310,8 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
                 data={data} 
                 indicatorData={indicatorData}
                 indicatorType={indicator}
-                indicatorColor={indicator === 'RSI' ? '#b4009e' : '#2962ff'}
+                indicatorColor={indicator === 'RSI' ? '#0d9488' : '#0f172a'} // Teal and Slate
+                chartType={chartType}
               />
             ) : (
               <Box sx={{ 
@@ -297,15 +329,15 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
       </Box>
 
       {/* ZONE D: FOOTER (Range / Zoom) */}
-      <Box sx={{ p: 1, bgcolor: 'white', borderTop: '1px solid #f0f0f0' }}>
+      <Box sx={{ p: 1, bgcolor: 'background.paper', borderTop: 1, borderColor: 'divider' }}>
          <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
             <Typography variant="overline" color="text.secondary" sx={{ mr: 2 }}>RANGE</Typography>
             
             {[
                 { label: '1M', val: 30 },
-                { label: '3M', val: 90 },
-                { label: '1Y', val: 260 },
-                { label: '5Y', val: 1300 },
+                { label: '3M', val: 92 },
+                { label: '1Y', val: 355 },
+                { label: '5Y', val: 355 * 5 },
                 { label: 'Max', val: 5000 }
             ].map((opt) => (
                 <Button 
@@ -322,6 +354,6 @@ export const StockWidget = ({ symbol, onSymbolChange }) => {
          </Stack>
       </Box>
 
-    </Paper>
+    </Box>
   );
 };
